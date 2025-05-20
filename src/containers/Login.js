@@ -26,6 +26,7 @@ export default class Login {
   }
   handleSubmitEmployee = (e) => {
     e.preventDefault();
+    console.log("handleSubmitEmployee");
     const user = {
       type: "Employee",
       email: e.target.querySelector(`input[data-testid="employee-email-input"]`)
@@ -35,6 +36,7 @@ export default class Login {
       ).value,
       status: "connected",
     };
+    console.log(user);
     this.localStorage.setItem("user", JSON.stringify(user));
     this.login(user)
       .catch((err) => this.createUser(user))
@@ -48,6 +50,7 @@ export default class Login {
 
   handleSubmitAdmin = (e) => {
     e.preventDefault();
+    console.log("handleSubmitAdmin");
     const user = {
       type: "Admin",
       email: e.target.querySelector(`input[data-testid="admin-email-input"]`)
