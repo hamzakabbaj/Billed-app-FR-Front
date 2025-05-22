@@ -127,6 +127,7 @@ export default class {
     };
     this.updateBill(newBill);
     this.onNavigate(ROUTES_PATH["Dashboard"]);
+    window.location.reload();
   };
 
   handleRefuseSubmit = (e, bill) => {
@@ -137,6 +138,7 @@ export default class {
     };
     this.updateBill(newBill);
     this.onNavigate(ROUTES_PATH["Dashboard"]);
+    window.location.reload();
   };
 
   handleShowTickets(e, bills, index) {
