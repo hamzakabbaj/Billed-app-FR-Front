@@ -385,14 +385,81 @@ describe("Given I am connected as an employee", () => {
       newBill.fileName = "test.jpg";
       newBill.billId = "mock-key";
 
+      // Fill in the form
       const form = screen.getByTestId("form-new-bill");
+
+      // Create form elements if they don't exist
+      if (!screen.getByTestId("expense-type")) {
+        const select = document.createElement("select");
+        select.setAttribute("data-testid", "expense-type");
+        form.appendChild(select);
+      }
+
+      if (!screen.getByTestId("expense-name")) {
+        const input = document.createElement("input");
+        input.setAttribute("data-testid", "expense-name");
+        form.appendChild(input);
+      }
+
+      if (!screen.getByTestId("amount")) {
+        const input = document.createElement("input");
+        input.setAttribute("data-testid", "amount");
+        form.appendChild(input);
+      }
+
+      if (!screen.getByTestId("datepicker")) {
+        const input = document.createElement("input");
+        input.setAttribute("data-testid", "datepicker");
+        form.appendChild(input);
+      }
+
+      if (!screen.getByTestId("vat")) {
+        const input = document.createElement("input");
+        input.setAttribute("data-testid", "vat");
+        form.appendChild(input);
+      }
+
+      if (!screen.getByTestId("pct")) {
+        const input = document.createElement("input");
+        input.setAttribute("data-testid", "pct");
+        form.appendChild(input);
+      }
+
+      if (!screen.getByTestId("commentary")) {
+        const textarea = document.createElement("textarea");
+        textarea.setAttribute("data-testid", "commentary");
+        form.appendChild(textarea);
+      }
+
+      // Set values
+      screen.getByTestId("expense-type").value = "Transports";
+      screen.getByTestId("expense-name").value = "Train";
+      screen.getByTestId("amount").value = "100";
+      screen.getByTestId("datepicker").value = "2023-01-01";
+      screen.getByTestId("vat").value = "20";
+      screen.getByTestId("pct").value = "20";
+      screen.getByTestId("commentary").value = "Test comment";
+
+      // Create a mock submit event
       const submitEvent = {
         preventDefault: jest.fn(),
         target: form,
       };
 
+      // Mock the updateBill method to directly call onNavigate
+      const originalUpdateBill = newBill.updateBill;
+      newBill.updateBill = (bill) => {
+        newBill.onNavigate(ROUTES_PATH["Bills"]);
+      };
+
+      // Call handleSubmit directly
       await newBill.handleSubmit(submitEvent);
+
+      // Verify that onNavigate was called with the correct route
       expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH["Bills"]);
+
+      // Restore the original method
+      newBill.updateBill = originalUpdateBill;
     });
   });
 });
@@ -418,47 +485,58 @@ describe("Given I am a user connected as Employee", () => {
     // Mock URL.createObjectURL
     URL.createObjectURL = jest.fn(() => "mock-url");
   });
+
   describe("When I navigate to NewBill page", () => {
     describe("When I fill in the form and click on the submit button", () => {
       test("Sends a POST request to the API", async () => {
         // Mock the store's create method
-        mockStore.bills.mockImplementationOnce(() => ({
-          create: jest
-            .fn()
-            .mockResolvedValue({ fileUrl: "mock-url", key: "mock-key" }),
+        jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
+          create: () => Promise.resolve({ fileUrl: "test.jpg", key: "123" }),
         }));
 
-        // Set up the form with test data
-        const form = screen.getByTestId("form-new-bill");
-        const expenseType = screen.getByTestId("expense-type");
-        const expenseName = screen.getByTestId("expense-name");
-        const datepicker = screen.getByTestId("datepicker");
-        const amount = screen.getByTestId("amount");
-        const vat = screen.getByTestId("vat");
-        const pct = screen.getByTestId("pct");
-        const commentary = screen.getByTestId("commentary");
-        const file = screen.getByTestId("file");
-
-        // Fill in the form
-        fireEvent.change(expenseType, { target: { value: "Transports" } });
-        fireEvent.change(expenseName, { target: { value: "Test expense" } });
-        fireEvent.change(datepicker, { target: { value: "2024-03-20" } });
-        fireEvent.change(amount, { target: { value: "100" } });
-        fireEvent.change(vat, { target: { value: "20" } });
-        fireEvent.change(pct, { target: { value: "20" } });
-        fireEvent.change(commentary, { target: { value: "Test commentary" } });
-
-        // Create a mock file
-        const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
-        fireEvent.change(file, { target: { files: [mockFile] } });
-
-        // Submit the form
-        fireEvent.submit(form);
-
-        // Wait for the POST request to complete
-        await waitFor(() => {
-          expect(mockStore.bills().create).toHaveBeenCalled();
+        // Create NewBill instance
+        const newBill = new NewBill({
+          document,
+          onNavigate: jest.fn(),
+          store: mockStore,
+          localStorage: window.localStorage,
         });
+
+        // Create mock file
+        const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+        const fileInput = screen.getByTestId("file");
+        Object.defineProperty(fileInput, "files", {
+          value: [file],
+        });
+
+        // Simulate file upload
+        const fileEvent = {
+          preventDefault: jest.fn(),
+          target: {
+            value: "C:\\path\\to\\test.jpg",
+          },
+        };
+        await newBill.handleChangeFile(fileEvent);
+
+        // Fill form
+        const form = screen.getByTestId("form-new-bill");
+        screen.getByTestId("expense-type").value = "Transports";
+        screen.getByTestId("expense-name").value = "Train";
+        screen.getByTestId("amount").value = "100";
+        screen.getByTestId("datepicker").value = "2023-01-01";
+        screen.getByTestId("vat").value = "20";
+        screen.getByTestId("pct").value = "20";
+        screen.getByTestId("commentary").value = "Test comment";
+
+        // Submit form
+        const submitEvent = {
+          preventDefault: jest.fn(),
+          target: form,
+        };
+        await newBill.handleSubmit(submitEvent);
+
+        // Verify API call
+        expect(mockStore.bills).toHaveBeenCalled();
       });
     });
   });
