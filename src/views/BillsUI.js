@@ -24,15 +24,45 @@ const rows = (data) => {
 };
 
 export default ({ data: bills, loading, error }) => {
-  console.log(bills);
-
   const antiChrono = (a, b) => {
-    return new Date(b.date) - new Date(a.date);
+    const parseFrenchDate = (dateStr) => {
+      const months = {
+        "Jan.": "01",
+        "Fév.": "02",
+        "Mar.": "03",
+        "Avr.": "04",
+        "Mai.": "05",
+        "Juin.": "06",
+        "Juil.": "07",
+        "Août.": "08",
+        "Sept.": "09",
+        "Oct.": "10",
+        "Nov.": "11",
+        "Déc.": "12",
+      };
+
+      const [day, month, year] = dateStr.split(" ");
+      const formattedDate = `20${year}-${months[month]}-${day.padStart(
+        2,
+        "0"
+      )}`;
+      return new Date(formattedDate);
+    };
+
+    return parseFrenchDate(b.date) - parseFrenchDate(a.date);
   };
 
   // Sort bills by date in descending order (most recent first)
   if (bills) {
-    bills.sort(antiChrono);
+    console.log(
+      "Before sorting bills",
+      bills.map((bill) => bill.date)
+    );
+    bills = bills.sort(antiChrono);
+    console.log(
+      "After sorting bills",
+      bills.map((bill) => bill.date)
+    );
   }
 
   const modal = () => `
