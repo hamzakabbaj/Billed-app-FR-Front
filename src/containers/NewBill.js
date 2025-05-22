@@ -87,6 +87,17 @@ export default class NewBill {
       fileName: this.fileName,
       status: "pending",
     };
+    if (
+      bill.name === "" ||
+      bill.date === "" ||
+      bill.amount === "" ||
+      bill.pct === "" ||
+      bill.fileUrl === "" ||
+      bill.fileName === ""
+    ) {
+      alert("Please fill in all fields");
+      return;
+    }
     this.updateBill(bill);
     this.onNavigate(ROUTES_PATH["Bills"]);
   };
